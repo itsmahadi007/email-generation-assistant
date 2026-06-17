@@ -61,7 +61,7 @@ Three metrics, each normalised to `[0, 1]`. The set deliberately mixes automated
 - **Focus:** Fact Recall
 - **Technique:** LLM-as-judge
 - **Definition:** Does the email accomplish the stated intent and include every key fact, without inventing new ones?
-- **Logic:** An impartial judge model marks each key fact present/absent (semantic match, paraphrase allowed), judges whether the intent is accomplished, and counts hallucinated claims. score = 0.70*fact_recall + 0.30*intent_accomplished - min(0.30, 0.10*hallucinated_claims), clamped to [0,1].
+- **Logic:** An impartial judge model marks each key fact present/absent (semantic match, paraphrase allowed), judges whether the intent is accomplished, and counts hallucinated claims. score = 0.70\*fact_recall + 0.30\*intent_accomplished - min(0.30, 0.10\*hallucinated_claims), clamped to [0,1].
 
 ### Metric 2: Tone Accuracy
 
@@ -75,7 +75,7 @@ Three metrics, each normalised to `[0, 1]`. The set deliberately mixes automated
 - **Focus:** Conciseness / Format Adherence
 - **Technique:** Deterministic Python
 - **Definition:** Is the email appropriately concise (vs the human reference) and well-formed (subject, greeting, sign-off, readable prose)?
-- **Logic:** Pure Python, no LLM. length_score = 1 - |gen_words/ref_words - 1| (penalises bloat and under-writing). structure_score = fraction of {subject line, greeting, sign-off} present (regex). readability_score = 1 - |Flesch - 60|/60 (textstat). score = 0.5*length + 0.3*structure + 0.2*readability.
+- **Logic:** Pure Python, no LLM. length_score = 1 - |gen_words/ref_words - 1| (penalises bloat and under-writing). structure_score = fraction of {subject line, greeting, sign-off} present (regex). readability_score = 1 - |Flesch - 60|/60 (textstat). score = 0.5\*length + 0.3\*structure + 0.2\*readability.
 
 
 ---

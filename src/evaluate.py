@@ -365,11 +365,14 @@ def write_report(data: dict) -> None:
         "pure-Python). The **composite** score is their mean.\n"
     )
     for i, m in enumerate(metrics.METRICS, 1):
+        # Escape '*' so Markdown doesn't read formula multiplication as emphasis.
+        defn = m["definition"].replace("*", "\\*")
+        logic = m["logic"].replace("*", "\\*")
         parts.append(f"### Metric {i}: {m['name']}\n")
         parts.append(f"- **Focus:** {m['focus']}")
         parts.append(f"- **Technique:** {m['technique']}")
-        parts.append(f"- **Definition:** {m['definition']}")
-        parts.append(f"- **Logic:** {m['logic']}\n")
+        parts.append(f"- **Definition:** {defn}")
+        parts.append(f"- **Logic:** {logic}\n")
 
     parts.append("\n---\n\n## Raw evaluation data\n")
     parts.append("### Per-model averages\n")
