@@ -1,0 +1,119 @@
+[
+  {
+    "id": "s01_followup_meeting",
+    "intent": "Follow up after a meeting",
+    "key_facts": [
+      "We met Tuesday to discuss the Q3 product roadmap",
+      "I agreed to share the API spec by Friday",
+      "Propose a follow-up sync in two weeks"
+    ],
+    "tone": "professional and warm",
+    "reference_email": "Subject: Following up on our Q3 roadmap chat\n\nHi Priya,\n\nThanks for the great discussion on Tuesday about the Q3 product roadmap. As promised, I'll have the API spec over to you by Friday so your team can start scoping.\n\nWould it make sense to reconnect in about two weeks to review progress? Happy to send an invite.\n\nBest,\nMahadi"
+  },
+  {
+    "id": "s02_rfp_details",
+    "intent": "Request proposal and pricing details from a vendor",
+    "key_facts": [
+      "We're evaluating the Enterprise plan",
+      "We need pricing for 50 seats",
+      "We need the typical onboarding timeline",
+      "We need your SOC 2 documentation"
+    ],
+    "tone": "formal",
+    "reference_email": "Subject: Request for Enterprise proposal details\n\nDear Sales Team,\n\nWe are evaluating your Enterprise plan and would like to request a formal proposal. Specifically, could you provide pricing for 50 seats, the typical onboarding timeline, and your SOC 2 documentation?\n\nWe would appreciate receiving these materials at your earliest convenience so we can proceed with our internal review.\n\nKind regards,\nMahadi Hassan"
+  },
+  {
+    "id": "s03_decline_vendor",
+    "intent": "Politely decline a vendor after a demo",
+    "key_facts": [
+      "Appreciated the product demo last week",
+      "We've decided to go with another solution this quarter",
+      "Open to revisiting the conversation next year"
+    ],
+    "tone": "empathetic and polite",
+    "reference_email": "Subject: Thank you — our decision for this quarter\n\nHi Marcus,\n\nThank you for the thoughtful demo last week; it was genuinely helpful and your team was a pleasure to work with. After careful consideration, we've decided to move forward with another solution this quarter.\n\nThis wasn't an easy call, and I'd be glad to revisit the conversation next year as our needs evolve. Wishing you and the team all the best in the meantime.\n\nWarm regards,\nMahadi"
+  },
+  {
+    "id": "s04_apology_delay",
+    "intent": "Apologize to a customer for a shipping delay",
+    "key_facts": [
+      "Order #4821 is delayed by five days",
+      "The delay was caused by a supplier issue",
+      "The new delivery estimate is next Wednesday",
+      "We're offering 15% off their next order"
+    ],
+    "tone": "empathetic and apologetic",
+    "reference_email": "Subject: An update (and apology) on order #4821\n\nHi Jordan,\n\nI'm sorry to share that your order #4821 is running about five days behind schedule due to a delay from one of our suppliers. I know that's frustrating, and I apologize for the inconvenience.\n\nThe good news: your order is now expected to arrive next Wednesday. As a thank-you for your patience, I've added 15% off your next order to your account.\n\nPlease reach out if there's anything else I can do.\n\nSincerely,\nMahadi"
+  },
+  {
+    "id": "s05_urgent_escalation",
+    "intent": "Escalate a production outage to the IT on-call team",
+    "key_facts": [
+      "The production checkout API has been down since 2:14pm",
+      "It is blocking customer purchases",
+      "Roughly 3,000 users are affected",
+      "We need an acknowledgement within 30 minutes"
+    ],
+    "tone": "urgent",
+    "reference_email": "Subject: URGENT: Checkout API down in production — ~3,000 users affected\n\nHi On-Call Team,\n\nThe production checkout API has been down since 2:14pm and is blocking all customer purchases. We estimate roughly 3,000 users are currently affected.\n\nThis is a revenue-impacting incident. Please acknowledge within the next 30 minutes and begin triage immediately.\n\nThanks,\nMahadi"
+  },
+  {
+    "id": "s06_cold_outreach_partner",
+    "intent": "Cold outreach proposing a newsletter sponsorship partnership",
+    "key_facts": [
+      "We run a newsletter with 20,000 subscribers",
+      "Your developer tool is a strong fit for our audience",
+      "We'd like to propose a sponsored placement",
+      "I can share our media kit on request"
+    ],
+    "tone": "confident and casual",
+    "reference_email": "Subject: Your tool + our 20k developer audience?\n\nHey Lena,\n\nI run a newsletter that goes out to 20,000 developers every week, and your tool is exactly the kind of thing they'd want to hear about.\n\nWe'd love to feature you in a sponsored placement. If that's interesting, I'll send over our media kit with audience stats and rates — just say the word.\n\nCheers,\nMahadi"
+  },
+  {
+    "id": "s07_thank_mentor",
+    "intent": "Thank a mentor for their help",
+    "key_facts": [
+      "You helped me prepare for my product manager interview",
+      "I got the offer at Acme",
+      "I'd like to treat you to coffee next week"
+    ],
+    "tone": "warm and sincere",
+    "reference_email": "Subject: I got the offer — thank you!\n\nHi Sara,\n\nI wanted you to be among the first to know: I got the PM offer at Acme! I honestly don't think I'd have been ready without the mock interviews and advice you gave me — thank you so much.\n\nCan I treat you to coffee next week to say a proper thank-you? My schedule is wide open.\n\nWith gratitude,\nMahadi"
+  },
+  {
+    "id": "s08_deadline_extension",
+    "intent": "Request a deadline extension from a client",
+    "key_facts": [
+      "The project scope grew by two additional features",
+      "I'm requesting a one-week extension to March 14",
+      "Milestone 1 will still be delivered on time"
+    ],
+    "tone": "professional and diplomatic",
+    "reference_email": "Subject: Proposed timeline adjustment\n\nHi David,\n\nAs we've added two features to the original scope, I'd like to propose moving the final delivery date out by one week, to March 14, to ensure we hold our quality bar.\n\nImportantly, Milestone 1 will still land on its original date, so you'll have working progress to review on schedule. Let me know if that works, and I'll update our plan accordingly.\n\nBest regards,\nMahadi"
+  },
+  {
+    "id": "s09_price_increase",
+    "intent": "Announce a price increase to existing customers",
+    "key_facts": [
+      "Prices will rise by 8% effective January 1",
+      "This is our first price increase in three years",
+      "Existing annual plans are locked at current rates until renewal",
+      "We've added new features: priority support and advanced analytics"
+    ],
+    "tone": "formal and reassuring",
+    "reference_email": "Subject: An update to our pricing, effective January 1\n\nDear Valued Customer,\n\nWe're writing to let you know that our prices will increase by 8% effective January 1 — our first adjustment in three years. This change allows us to keep investing in the product you rely on.\n\nIf you're on an annual plan, your current rate is locked in until your next renewal, so nothing changes for you today. We've also added priority support and advanced analytics to every plan.\n\nThank you for your continued trust in us.\n\nSincerely,\nThe Team"
+  },
+  {
+    "id": "s10_webinar_invite",
+    "intent": "Invite a guest speaker to a webinar",
+    "key_facts": [
+      "The webinar is on AI in fintech",
+      "It is scheduled for April 22, 2-3pm ET",
+      "The audience is roughly 500 startup founders",
+      "We'd like a 25-minute talk followed by Q&A",
+      "There is a $500 honorarium"
+    ],
+    "tone": "enthusiastic and professional",
+    "reference_email": "Subject: Invitation to speak: AI in Fintech webinar (April 22)\n\nHi Dr. Okafor,\n\nWe'd be thrilled to have you as a guest speaker for our upcoming webinar on AI in fintech, scheduled for April 22 from 2-3pm ET. Our audience will be around 500 startup founders who would benefit enormously from your perspective.\n\nWe're envisioning a 25-minute talk followed by audience Q&A, and we're glad to offer a $500 honorarium for your time. Would you be open to joining us?\n\nLooking forward to hopefully working together,\nMahadi"
+  }
+]

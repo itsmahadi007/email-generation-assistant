@@ -1,0 +1,1047 @@
+{
+  "config": {
+    "model_a": "openai/gpt-5.4",
+    "model_b": "openai/gpt-5.4-mini",
+    "judge_model": "anthropic/claude-sonnet-4.6",
+    "prompt_technique": "Role-play + Few-shot + Chain-of-thought (delimited output)"
+  },
+  "pricing": {
+    "openai/gpt-5.4": {
+      "prompt_per_token": 2.5e-06,
+      "completion_per_token": 1.5e-05,
+      "prompt_per_mtok": 2.5,
+      "completion_per_mtok": 15.0,
+      "blended_rank": 1e-05
+    },
+    "openai/gpt-5.4-mini": {
+      "prompt_per_token": 7.5e-07,
+      "completion_per_token": 4.5e-06,
+      "prompt_per_mtok": 0.75,
+      "completion_per_mtok": 4.5,
+      "blended_rank": 3e-06
+    }
+  },
+  "metrics": [
+    {
+      "key": "fact_intent_coverage",
+      "name": "Intent & Fact Coverage",
+      "focus": "Fact Recall",
+      "technique": "LLM-as-judge",
+      "definition": "Does the email accomplish the stated intent and include every key fact, without inventing new ones?",
+      "logic": "An impartial judge model marks each key fact present/absent (semantic match, paraphrase allowed), judges whether the intent is accomplished, and counts hallucinated claims. score = 0.70*fact_recall + 0.30*intent_accomplished - min(0.30, 0.10*hallucinated_claims), clamped to [0,1]."
+    },
+    {
+      "key": "tone_accuracy",
+      "name": "Tone Accuracy",
+      "focus": "Tone Accuracy",
+      "technique": "LLM-as-judge",
+      "definition": "How precisely does the email's register match the requested tone?",
+      "logic": "The judge rates tone match on a 1-5 rubric (5 = precise match, 1 = wrong tone). score = (rating - 1) / 4, mapping to [0,1]."
+    },
+    {
+      "key": "conciseness_format",
+      "name": "Conciseness & Format",
+      "focus": "Conciseness / Format Adherence",
+      "technique": "Deterministic Python",
+      "definition": "Is the email appropriately concise (vs the human reference) and well-formed (subject, greeting, sign-off, readable prose)?",
+      "logic": "Pure Python, no LLM. length_score = 1 - |gen_words/ref_words - 1| (penalises bloat and under-writing). structure_score = fraction of {subject line, greeting, sign-off} present (regex). readability_score = 1 - |Flesch - 60|/60 (textstat). score = 0.5*length + 0.3*structure + 0.2*readability."
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "s01_followup_meeting",
+      "intent": "Follow up after a meeting",
+      "key_facts": [
+        "We met Tuesday to discuss the Q3 product roadmap",
+        "I agreed to share the API spec by Friday",
+        "Propose a follow-up sync in two weeks"
+      ],
+      "tone": "professional and warm",
+      "reference_email": "Subject: Following up on our Q3 roadmap chat\n\nHi Priya,\n\nThanks for the great discussion on Tuesday about the Q3 product roadmap. As promised, I'll have the API spec over to you by Friday so your team can start scoping.\n\nWould it make sense to reconnect in about two weeks to review progress? Happy to send an invite.\n\nBest,\nMahadi"
+    },
+    {
+      "id": "s02_rfp_details",
+      "intent": "Request proposal and pricing details from a vendor",
+      "key_facts": [
+        "We're evaluating the Enterprise plan",
+        "We need pricing for 50 seats",
+        "We need the typical onboarding timeline",
+        "We need your SOC 2 documentation"
+      ],
+      "tone": "formal",
+      "reference_email": "Subject: Request for Enterprise proposal details\n\nDear Sales Team,\n\nWe are evaluating your Enterprise plan and would like to request a formal proposal. Specifically, could you provide pricing for 50 seats, the typical onboarding timeline, and your SOC 2 documentation?\n\nWe would appreciate receiving these materials at your earliest convenience so we can proceed with our internal review.\n\nKind regards,\nMahadi Hassan"
+    },
+    {
+      "id": "s03_decline_vendor",
+      "intent": "Politely decline a vendor after a demo",
+      "key_facts": [
+        "Appreciated the product demo last week",
+        "We've decided to go with another solution this quarter",
+        "Open to revisiting the conversation next year"
+      ],
+      "tone": "empathetic and polite",
+      "reference_email": "Subject: Thank you \u2014 our decision for this quarter\n\nHi Marcus,\n\nThank you for the thoughtful demo last week; it was genuinely helpful and your team was a pleasure to work with. After careful consideration, we've decided to move forward with another solution this quarter.\n\nThis wasn't an easy call, and I'd be glad to revisit the conversation next year as our needs evolve. Wishing you and the team all the best in the meantime.\n\nWarm regards,\nMahadi"
+    },
+    {
+      "id": "s04_apology_delay",
+      "intent": "Apologize to a customer for a shipping delay",
+      "key_facts": [
+        "Order #4821 is delayed by five days",
+        "The delay was caused by a supplier issue",
+        "The new delivery estimate is next Wednesday",
+        "We're offering 15% off their next order"
+      ],
+      "tone": "empathetic and apologetic",
+      "reference_email": "Subject: An update (and apology) on order #4821\n\nHi Jordan,\n\nI'm sorry to share that your order #4821 is running about five days behind schedule due to a delay from one of our suppliers. I know that's frustrating, and I apologize for the inconvenience.\n\nThe good news: your order is now expected to arrive next Wednesday. As a thank-you for your patience, I've added 15% off your next order to your account.\n\nPlease reach out if there's anything else I can do.\n\nSincerely,\nMahadi"
+    },
+    {
+      "id": "s05_urgent_escalation",
+      "intent": "Escalate a production outage to the IT on-call team",
+      "key_facts": [
+        "The production checkout API has been down since 2:14pm",
+        "It is blocking customer purchases",
+        "Roughly 3,000 users are affected",
+        "We need an acknowledgement within 30 minutes"
+      ],
+      "tone": "urgent",
+      "reference_email": "Subject: URGENT: Checkout API down in production \u2014 ~3,000 users affected\n\nHi On-Call Team,\n\nThe production checkout API has been down since 2:14pm and is blocking all customer purchases. We estimate roughly 3,000 users are currently affected.\n\nThis is a revenue-impacting incident. Please acknowledge within the next 30 minutes and begin triage immediately.\n\nThanks,\nMahadi"
+    },
+    {
+      "id": "s06_cold_outreach_partner",
+      "intent": "Cold outreach proposing a newsletter sponsorship partnership",
+      "key_facts": [
+        "We run a newsletter with 20,000 subscribers",
+        "Your developer tool is a strong fit for our audience",
+        "We'd like to propose a sponsored placement",
+        "I can share our media kit on request"
+      ],
+      "tone": "confident and casual",
+      "reference_email": "Subject: Your tool + our 20k developer audience?\n\nHey Lena,\n\nI run a newsletter that goes out to 20,000 developers every week, and your tool is exactly the kind of thing they'd want to hear about.\n\nWe'd love to feature you in a sponsored placement. If that's interesting, I'll send over our media kit with audience stats and rates \u2014 just say the word.\n\nCheers,\nMahadi"
+    },
+    {
+      "id": "s07_thank_mentor",
+      "intent": "Thank a mentor for their help",
+      "key_facts": [
+        "You helped me prepare for my product manager interview",
+        "I got the offer at Acme",
+        "I'd like to treat you to coffee next week"
+      ],
+      "tone": "warm and sincere",
+      "reference_email": "Subject: I got the offer \u2014 thank you!\n\nHi Sara,\n\nI wanted you to be among the first to know: I got the PM offer at Acme! I honestly don't think I'd have been ready without the mock interviews and advice you gave me \u2014 thank you so much.\n\nCan I treat you to coffee next week to say a proper thank-you? My schedule is wide open.\n\nWith gratitude,\nMahadi"
+    },
+    {
+      "id": "s08_deadline_extension",
+      "intent": "Request a deadline extension from a client",
+      "key_facts": [
+        "The project scope grew by two additional features",
+        "I'm requesting a one-week extension to March 14",
+        "Milestone 1 will still be delivered on time"
+      ],
+      "tone": "professional and diplomatic",
+      "reference_email": "Subject: Proposed timeline adjustment\n\nHi David,\n\nAs we've added two features to the original scope, I'd like to propose moving the final delivery date out by one week, to March 14, to ensure we hold our quality bar.\n\nImportantly, Milestone 1 will still land on its original date, so you'll have working progress to review on schedule. Let me know if that works, and I'll update our plan accordingly.\n\nBest regards,\nMahadi"
+    },
+    {
+      "id": "s09_price_increase",
+      "intent": "Announce a price increase to existing customers",
+      "key_facts": [
+        "Prices will rise by 8% effective January 1",
+        "This is our first price increase in three years",
+        "Existing annual plans are locked at current rates until renewal",
+        "We've added new features: priority support and advanced analytics"
+      ],
+      "tone": "formal and reassuring",
+      "reference_email": "Subject: An update to our pricing, effective January 1\n\nDear Valued Customer,\n\nWe're writing to let you know that our prices will increase by 8% effective January 1 \u2014 our first adjustment in three years. This change allows us to keep investing in the product you rely on.\n\nIf you're on an annual plan, your current rate is locked in until your next renewal, so nothing changes for you today. We've also added priority support and advanced analytics to every plan.\n\nThank you for your continued trust in us.\n\nSincerely,\nThe Team"
+    },
+    {
+      "id": "s10_webinar_invite",
+      "intent": "Invite a guest speaker to a webinar",
+      "key_facts": [
+        "The webinar is on AI in fintech",
+        "It is scheduled for April 22, 2-3pm ET",
+        "The audience is roughly 500 startup founders",
+        "We'd like a 25-minute talk followed by Q&A",
+        "There is a $500 honorarium"
+      ],
+      "tone": "enthusiastic and professional",
+      "reference_email": "Subject: Invitation to speak: AI in Fintech webinar (April 22)\n\nHi Dr. Okafor,\n\nWe'd be thrilled to have you as a guest speaker for our upcoming webinar on AI in fintech, scheduled for April 22 from 2-3pm ET. Our audience will be around 500 startup founders who would benefit enormously from your perspective.\n\nWe're envisioning a 25-minute talk followed by audience Q&A, and we're glad to offer a $500 honorarium for your time. Would you be open to joining us?\n\nLooking forward to hopefully working together,\nMahadi"
+    }
+  ],
+  "runs": [
+    {
+      "model": "openai/gpt-5.4",
+      "scenario_id": "s01_followup_meeting",
+      "intent": "Follow up after a meeting",
+      "tone": "professional and warm",
+      "email": "Subject: Follow-up on our Q3 product roadmap discussion\n\nHi,\n\nThank you again for meeting on Tuesday to discuss the Q3 product roadmap. As agreed, I\u2019ll share the API spec by Friday. To keep things moving, would you be open to a follow-up sync in two weeks?\n\nBest,\nAlex",
+      "scores": {
+        "fact_intent_coverage": {
+          "score": 1.0,
+          "detail": {
+            "fact_recall": 1.0,
+            "facts_included": 3,
+            "facts_total": 3,
+            "intent_accomplished": true,
+            "hallucinated_claims": 0
+          }
+        },
+        "tone_accuracy": {
+          "score": 0.75,
+          "detail": {
+            "rating": 4,
+            "rationale": "The email is clearly professional and carries a warm, collegial tone through phrases like 'Thank you again' and the collaborative framing, though it is slightly brief and could offer a touch more personal warmth to fully nail the requested register."
+          }
+        },
+        "conciseness_format": {
+          "score": 0.8763,
+          "detail": {
+            "gen_words": 51,
+            "ref_words": 61,
+            "length_ratio": 0.836,
+            "length_score": 0.8361,
+            "has_subject": true,
+            "has_greeting": true,
+            "has_signoff": true,
+            "structure_score": 1.0,
+            "flesch_reading_ease": 72.5,
+            "readability_score": 0.7915
+          }
+        },
+        "composite": 0.8754
+      },
+      "error": null
+    },
+    {
+      "model": "openai/gpt-5.4",
+      "scenario_id": "s02_rfp_details",
+      "intent": "Request proposal and pricing details from a vendor",
+      "tone": "formal",
+      "email": "Subject: Request for Enterprise Proposal and Pricing Information\n\nDear Sir or Madam,\n\nWe are currently evaluating the Enterprise plan and would appreciate it if you could provide a proposal that includes pricing for 50 seats, the typical onboarding timeline, and your SOC 2 documentation.\n\nThank you for your assistance.\n\nSincerely,\nAlex",
+      "scores": {
+        "fact_intent_coverage": {
+          "score": 1.0,
+          "detail": {
+            "fact_recall": 1.0,
+            "facts_included": 4,
+            "facts_total": 4,
+            "intent_accomplished": true,
+            "hallucinated_claims": 0
+          }
+        },
+        "tone_accuracy": {
+          "score": 1.0,
+          "detail": {
+            "rating": 5,
+            "rationale": "The email is impeccably formal throughout, employing a proper salutation ('Dear Sir or Madam'), polished diction ('evaluating,' 'would appreciate'), a courteous closing ('Thank you for your assistance'), and a professional sign-off ('Sincerely'), with no informal slips whatsoever."
+          }
+        },
+        "conciseness_format": {
+          "score": 0.8058,
+          "detail": {
+            "gen_words": 51,
+            "ref_words": 62,
+            "length_ratio": 0.823,
+            "length_score": 0.8226,
+            "has_subject": true,
+            "has_greeting": true,
+            "has_signoff": true,
+            "structure_score": 1.0,
+            "flesch_reading_ease": 28.3,
+            "readability_score": 0.4723
+          }
+        },
+        "composite": 0.9353
+      },
+      "error": null
+    },
+    {
+      "model": "openai/gpt-5.4",
+      "scenario_id": "s03_decline_vendor",
+      "intent": "Politely decline a vendor after a demo",
+      "tone": "empathetic and polite",
+      "email": "Subject: Thank you for the demo\n\nHi,\n\nThank you again for the product demo last week \u2014 I really appreciated the time and walkthrough. After reviewing our options, we've decided to go with another solution this quarter.\n\nThat said, we'd be open to revisiting the conversation next year.\n\nBest,\nAlex",
+      "scores": {
+        "fact_intent_coverage": {
+          "score": 1.0,
+          "detail": {
+            "fact_recall": 1.0,
+            "facts_included": 3,
+            "facts_total": 3,
+            "intent_accomplished": true,
+            "hallucinated_claims": 0
+          }
+        },
+        "tone_accuracy": {
+          "score": 0.75,
+          "detail": {
+            "rating": 4,
+            "rationale": "The email is polite and appreciative throughout, but it lacks a deeper empathetic quality\u2014such as acknowledging the vendor's effort or expressing genuine understanding of their perspective\u2014making it slightly more transactional than warmly empathetic."
+          }
+        },
+        "conciseness_format": {
+          "score": 0.7925,
+          "detail": {
+            "gen_words": 51,
+            "ref_words": 80,
+            "length_ratio": 0.637,
+            "length_score": 0.6375,
+            "has_subject": true,
+            "has_greeting": true,
+            "has_signoff": true,
+            "structure_score": 1.0,
+            "flesch_reading_ease": 52.1,
+            "readability_score": 0.8689
+          }
+        },
+        "composite": 0.8475
+      },
+      "error": null
+    },
+    {
+      "model": "openai/gpt-5.4",
+      "scenario_id": "s04_apology_delay",
+      "intent": "Apologize to a customer for a shipping delay",
+      "tone": "empathetic and apologetic",
+      "email": "Subject: Apology for the delay on Order #4821\n\nHi,\n\nI\u2019m very sorry for the delay with Order #4821. Due to a supplier issue, the order is now running five days behind schedule, and the new estimated delivery date is next Wednesday.\n\nI understand how frustrating this is, and I apologize for the inconvenience. To make up for it, we\u2019d like to offer you 15% off your next order.\n\nThank you for your patience.\n\nBest,\nAlex",
+      "scores": {
+        "fact_intent_coverage": {
+          "score": 1.0,
+          "detail": {
+            "fact_recall": 1.0,
+            "facts_included": 4,
+            "facts_total": 4,
+            "intent_accomplished": true,
+            "hallucinated_claims": 0
+          }
+        },
+        "tone_accuracy": {
+          "score": 0.75,
+          "detail": {
+            "rating": 4,
+            "rationale": "The email is clearly apologetic and shows empathy by acknowledging the customer's frustration, though phrases like 'Thank you for your patience' feel slightly formulaic and the overall tone could be warmer and more personally empathetic to fully match the requested register."
+          }
+        },
+        "conciseness_format": {
+          "score": 0.9188,
+          "detail": {
+            "gen_words": 77,
+            "ref_words": 89,
+            "length_ratio": 0.865,
+            "length_score": 0.8652,
+            "has_subject": true,
+            "has_greeting": true,
+            "has_signoff": true,
+            "structure_score": 1.0,
+            "flesch_reading_ease": 64.1,
+            "readability_score": 0.9309
+          }
+        },
+        "composite": 0.8896
+      },
+      "error": null
+    },
+    {
+      "model": "openai/gpt-5.4",
+      "scenario_id": "s05_urgent_escalation",
+      "intent": "Escalate a production outage to the IT on-call team",
+      "tone": "urgent",
+      "email": "Subject: Urgent: Production checkout API outage\n\nHi IT On-Call Team,\n\nThe production checkout API has been down since 2:14pm and is currently blocking customer purchases. We estimate that roughly 3,000 users are affected.\n\nPlease acknowledge receipt of this message within 30 minutes and begin triage immediately.\n\nThanks,\nAlex",
+      "scores": {
+        "fact_intent_coverage": {
+          "score": 1.0,
+          "detail": {
+            "fact_recall": 1.0,
+            "facts_included": 4,
+            "facts_total": 4,
+            "intent_accomplished": true,
+            "hallucinated_claims": 0
+          }
+        },
+        "tone_accuracy": {
+          "score": 1.0,
+          "detail": {
+            "rating": 5,
+            "rationale": "The email precisely conveys urgency through its subject line flag, specific impact metrics (3,000 users, exact downtime timestamp), a firm 30-minute acknowledgment deadline, and direct action-oriented language throughout."
+          }
+        },
+        "conciseness_format": {
+          "score": 0.874,
+          "detail": {
+            "gen_words": 51,
+            "ref_words": 59,
+            "length_ratio": 0.864,
+            "length_score": 0.8644,
+            "has_subject": true,
+            "has_greeting": true,
+            "has_signoff": true,
+            "structure_score": 1.0,
+            "flesch_reading_ease": 42.5,
+            "readability_score": 0.7091
+          }
+        },
+        "composite": 0.958
+      },
+      "error": null
+    },
+    {
+      "model": "openai/gpt-5.4",
+      "scenario_id": "s06_cold_outreach_partner",
+      "intent": "Cold outreach proposing a newsletter sponsorship partnership",
+      "tone": "confident and casual",
+      "email": "Subject: Potential newsletter sponsorship fit\n\nHi there,\n\nI\u2019m reaching out because we run a newsletter with 20,000 subscribers, and your developer tool looks like a strong fit for our audience. We\u2019d love to propose a sponsored placement and explore whether there\u2019s a partnership opportunity here.\n\nIf helpful, I can share our media kit on request.\n\nBest,\nAlex",
+      "scores": {
+        "fact_intent_coverage": {
+          "score": 1.0,
+          "detail": {
+            "fact_recall": 1.0,
+            "facts_included": 4,
+            "facts_total": 4,
+            "intent_accomplished": true,
+            "hallucinated_claims": 0
+          }
+        },
+        "tone_accuracy": {
+          "score": 0.5,
+          "detail": {
+            "rating": 3,
+            "rationale": "The email is confident in presenting the value proposition but leans professional and slightly formal rather than casual, lacking the relaxed, conversational language that would fully match the requested tone."
+          }
+        },
+        "conciseness_format": {
+          "score": 0.9071,
+          "detail": {
+            "gen_words": 61,
+            "ref_words": 69,
+            "length_ratio": 0.884,
+            "length_score": 0.8841,
+            "has_subject": true,
+            "has_greeting": true,
+            "has_signoff": true,
+            "structure_score": 1.0,
+            "flesch_reading_ease": 49.5,
+            "readability_score": 0.8253
+          }
+        },
+        "composite": 0.8024
+      },
+      "error": null
+    },
+    {
+      "model": "openai/gpt-5.4",
+      "scenario_id": "s07_thank_mentor",
+      "intent": "Thank a mentor for their help",
+      "tone": "warm and sincere",
+      "email": "Subject: Thank you\n\nHi [Mentor Name],\n\nI wanted to thank you for all your help preparing me for my product manager interview. Your advice made a real difference, and I\u2019m excited to share that I got the offer at Acme.\n\nI\u2019d love to treat you to coffee next week to say thank you in person.\n\nWarmly,\n[Your Name]",
+      "scores": {
+        "fact_intent_coverage": {
+          "score": 1.0,
+          "detail": {
+            "fact_recall": 1.0,
+            "facts_included": 3,
+            "facts_total": 3,
+            "intent_accomplished": true,
+            "hallucinated_claims": 0
+          }
+        },
+        "tone_accuracy": {
+          "score": 0.75,
+          "detail": {
+            "rating": 4,
+            "rationale": "The email is genuinely warm and sincere throughout\u2014expressing gratitude, sharing good news, and offering a personal gesture\u2014but it reads slightly brief and understated, leaving a little room for more heartfelt depth that would make it a perfect match."
+          }
+        },
+        "conciseness_format": {
+          "score": 0.8614,
+          "detail": {
+            "gen_words": 60,
+            "ref_words": 71,
+            "length_ratio": 0.845,
+            "length_score": 0.8451,
+            "has_subject": true,
+            "has_greeting": true,
+            "has_signoff": true,
+            "structure_score": 1.0,
+            "flesch_reading_ease": 78.3,
+            "readability_score": 0.6942
+          }
+        },
+        "composite": 0.8705
+      },
+      "error": null
+    },
+    {
+      "model": "openai/gpt-5.4",
+      "scenario_id": "s08_deadline_extension",
+      "intent": "Request a deadline extension from a client",
+      "tone": "professional and diplomatic",
+      "email": "Subject: Request to extend project deadline to March 14\n\nDear Client,\n\nI\u2019m writing to request a one-week extension to March 14 for the project timeline. Since the scope has grown to include two additional features, I want to ensure we have the time needed to deliver the work to the expected standard.\n\nImportantly, Milestone 1 will still be delivered on time.\n\nPlease let me know if this revised timeline works for you. I appreciate your consideration.\n\nBest regards,\nAlex",
+      "scores": {
+        "fact_intent_coverage": {
+          "score": 1.0,
+          "detail": {
+            "fact_recall": 1.0,
+            "facts_included": 3,
+            "facts_total": 3,
+            "intent_accomplished": true,
+            "hallucinated_claims": 0
+          }
+        },
+        "tone_accuracy": {
+          "score": 1.0,
+          "detail": {
+            "rating": 5,
+            "rationale": "The email is consistently professional and diplomatic throughout, using courteous language, a clear and respectful request, reassurance about Milestone 1, and a polite closing that invites collaboration without pressure."
+          }
+        },
+        "conciseness_format": {
+          "score": 0.9541,
+          "detail": {
+            "gen_words": 81,
+            "ref_words": 76,
+            "length_ratio": 1.066,
+            "length_score": 0.9342,
+            "has_subject": true,
+            "has_greeting": true,
+            "has_signoff": true,
+            "structure_score": 1.0,
+            "flesch_reading_ease": 63.9,
+            "readability_score": 0.9351
+          }
+        },
+        "composite": 0.9847
+      },
+      "error": null
+    },
+    {
+      "model": "openai/gpt-5.4",
+      "scenario_id": "s09_price_increase",
+      "intent": "Announce a price increase to existing customers",
+      "tone": "formal and reassuring",
+      "email": "Subject: Important Update to Pricing Effective January 1\n\nDear Customer,\n\nWe are writing to inform you that our prices will increase by 8%, effective January 1. This is our first price increase in three years.\n\nDuring this time, we have continued to invest in the value we provide, including the addition of priority support and advanced analytics. For customers on existing annual plans, current rates will remain locked until renewal.\n\nWe appreciate your continued partnership and remain committed to delivering a high level of service and product value.\n\nSincerely,\nAlex",
+      "scores": {
+        "fact_intent_coverage": {
+          "score": 1.0,
+          "detail": {
+            "fact_recall": 1.0,
+            "facts_included": 4,
+            "facts_total": 4,
+            "intent_accomplished": true,
+            "hallucinated_claims": 0
+          }
+        },
+        "tone_accuracy": {
+          "score": 0.75,
+          "detail": {
+            "rating": 4,
+            "rationale": "The email is clearly formal in structure and language, and conveys reassurance through mentions of locked rates, continued investment, and commitment to service, though the tone could be slightly warmer or more explicitly empathetic to fully maximize the reassuring quality."
+          }
+        },
+        "conciseness_format": {
+          "score": 0.8965,
+          "detail": {
+            "gen_words": 90,
+            "ref_words": 94,
+            "length_ratio": 0.957,
+            "length_score": 0.9574,
+            "has_subject": true,
+            "has_greeting": true,
+            "has_signoff": true,
+            "structure_score": 1.0,
+            "flesch_reading_ease": 35.3,
+            "readability_score": 0.5891
+          }
+        },
+        "composite": 0.8822
+      },
+      "error": null
+    },
+    {
+      "model": "openai/gpt-5.4",
+      "scenario_id": "s10_webinar_invite",
+      "intent": "Invite a guest speaker to a webinar",
+      "tone": "enthusiastic and professional",
+      "email": "Subject: Invitation to speak at our webinar on AI in fintech\n\nHi,\n\nI\u2019m reaching out to invite you to join us as a guest speaker for an upcoming webinar on AI in fintech. The session is scheduled for April 22 from 2\u20133pm ET, and the audience will be roughly 500 startup founders.\n\nWe\u2019d love to have you give a 25-minute talk followed by Q&A. We\u2019re also offering a $500 honorarium.\n\nIf this is of interest, I\u2019d be delighted to share more and discuss next steps.\n\nBest,\nAlex",
+      "scores": {
+        "fact_intent_coverage": {
+          "score": 1.0,
+          "detail": {
+            "fact_recall": 1.0,
+            "facts_included": 5,
+            "facts_total": 5,
+            "intent_accomplished": true,
+            "hallucinated_claims": 0
+          }
+        },
+        "tone_accuracy": {
+          "score": 0.5,
+          "detail": {
+            "rating": 3,
+            "rationale": "The email is professional and polite but largely neutral and understated, with only one mildly enthusiastic phrase ('We'd love to have you' and 'I'd be delighted'), falling short of the genuinely enthusiastic energy the requested tone calls for."
+          }
+        },
+        "conciseness_format": {
+          "score": 0.966,
+          "detail": {
+            "gen_words": 94,
+            "ref_words": 93,
+            "length_ratio": 1.011,
+            "length_score": 0.9892,
+            "has_subject": true,
+            "has_greeting": true,
+            "has_signoff": true,
+            "structure_score": 1.0,
+            "flesch_reading_ease": 68.6,
+            "readability_score": 0.8568
+          }
+        },
+        "composite": 0.822
+      },
+      "error": null
+    },
+    {
+      "model": "openai/gpt-5.4-mini",
+      "scenario_id": "s01_followup_meeting",
+      "intent": "Follow up after a meeting",
+      "tone": "professional and warm",
+      "email": "Subject: Following up on Tuesday\u2019s roadmap discussion\n\nHi there,\n\nIt was great meeting Tuesday to discuss the Q3 product roadmap. As promised, I agreed to share the API spec by Friday. I also wanted to suggest a follow-up sync in two weeks so we can review progress and align on next steps.\n\nBest,\nAlex",
+      "scores": {
+        "fact_intent_coverage": {
+          "score": 1.0,
+          "detail": {
+            "fact_recall": 1.0,
+            "facts_included": 3,
+            "facts_total": 3,
+            "intent_accomplished": true,
+            "hallucinated_claims": 0
+          }
+        },
+        "tone_accuracy": {
+          "score": 0.75,
+          "detail": {
+            "rating": 4,
+            "rationale": "The email is clearly professional and carries a friendly, collegial warmth (e.g., 'It was great meeting'), though it stops just short of a precise match because the tone is slightly brief and transactional, lacking a small additional personal touch that would fully embody 'warm.'"
+          }
+        },
+        "conciseness_format": {
+          "score": 0.9274,
+          "detail": {
+            "gen_words": 56,
+            "ref_words": 61,
+            "length_ratio": 0.918,
+            "length_score": 0.918,
+            "has_subject": true,
+            "has_greeting": true,
+            "has_signoff": true,
+            "structure_score": 1.0,
+            "flesch_reading_ease": 69.5,
+            "readability_score": 0.8417
+          }
+        },
+        "composite": 0.8925
+      },
+      "error": null
+    },
+    {
+      "model": "openai/gpt-5.4-mini",
+      "scenario_id": "s02_rfp_details",
+      "intent": "Request proposal and pricing details from a vendor",
+      "tone": "formal",
+      "email": "Subject: Request for Enterprise Plan Details\n\nDear [Vendor Name],\n\nWe are currently evaluating the Enterprise plan and would appreciate it if you could share pricing for 50 seats, the typical onboarding timeline, and your SOC 2 documentation.\n\nThank you for your assistance.\n\nSincerely,\n[Your Name]",
+      "scores": {
+        "fact_intent_coverage": {
+          "score": 1.0,
+          "detail": {
+            "fact_recall": 1.0,
+            "facts_included": 4,
+            "facts_total": 4,
+            "intent_accomplished": true,
+            "hallucinated_claims": 0
+          }
+        },
+        "tone_accuracy": {
+          "score": 1.0,
+          "detail": {
+            "rating": 5,
+            "rationale": "The email employs consistently formal language throughout, including a proper salutation ('Dear'), professional vocabulary ('evaluating,' 'would appreciate'), a courteous closing ('Thank you for your assistance'), and a formal sign-off ('Sincerely'), with no informal slips whatsoever."
+          }
+        },
+        "conciseness_format": {
+          "score": 0.8253,
+          "detail": {
+            "gen_words": 45,
+            "ref_words": 62,
+            "length_ratio": 0.726,
+            "length_score": 0.7258,
+            "has_subject": true,
+            "has_greeting": true,
+            "has_signoff": true,
+            "structure_score": 1.0,
+            "flesch_reading_ease": 48.7,
+            "readability_score": 0.8122
+          }
+        },
+        "composite": 0.9418
+      },
+      "error": null
+    },
+    {
+      "model": "openai/gpt-5.4-mini",
+      "scenario_id": "s03_decline_vendor",
+      "intent": "Politely decline a vendor after a demo",
+      "tone": "empathetic and polite",
+      "email": "Subject: Thank you for the demo\n\nHi Jordan,\n\nThank you again for the product demo last week \u2014 I really appreciated the time you took to walk us through it. After discussing internally, we've decided to go with another solution this quarter. That said, we're open to revisiting the conversation next year.\n\nBest,\nAlex",
+      "scores": {
+        "fact_intent_coverage": {
+          "score": 1.0,
+          "detail": {
+            "fact_recall": 1.0,
+            "facts_included": 3,
+            "facts_total": 3,
+            "intent_accomplished": true,
+            "hallucinated_claims": 0
+          }
+        },
+        "tone_accuracy": {
+          "score": 0.75,
+          "detail": {
+            "rating": 4,
+            "rationale": "The email is polite and considerate throughout, expressing genuine appreciation and leaving the door open diplomatically, though it lacks deeper empathetic acknowledgment of Jordan's effort or any softening of the rejection beyond a brief mention of future possibilities."
+          }
+        },
+        "conciseness_format": {
+          "score": 0.8212,
+          "detail": {
+            "gen_words": 55,
+            "ref_words": 80,
+            "length_ratio": 0.688,
+            "length_score": 0.6875,
+            "has_subject": true,
+            "has_greeting": true,
+            "has_signoff": true,
+            "structure_score": 1.0,
+            "flesch_reading_ease": 53.2,
+            "readability_score": 0.8871
+          }
+        },
+        "composite": 0.8571
+      },
+      "error": null
+    },
+    {
+      "model": "openai/gpt-5.4-mini",
+      "scenario_id": "s04_apology_delay",
+      "intent": "Apologize to a customer for a shipping delay",
+      "tone": "empathetic and apologetic",
+      "email": "Subject: Update on Order #4821\n\nHi,\n\nI\u2019m very sorry to let you know that Order #4821 is delayed by five days due to a supplier issue. Our new delivery estimate is next Wednesday, and we understand how frustrating this is.\n\nTo help make this right, we\u2019re offering 15% off your next order.\n\nThank you for your patience and understanding.\n\nBest,\nCustomer Support",
+      "scores": {
+        "fact_intent_coverage": {
+          "score": 1.0,
+          "detail": {
+            "fact_recall": 1.0,
+            "facts_included": 4,
+            "facts_total": 4,
+            "intent_accomplished": true,
+            "hallucinated_claims": 0
+          }
+        },
+        "tone_accuracy": {
+          "score": 0.75,
+          "detail": {
+            "rating": 4,
+            "rationale": "The email opens with a sincere apology, acknowledges the customer's frustration, and offers a goodwill gesture, closely matching an empathetic and apologetic tone, though it reads slightly transactional and brief rather than deeply empathetic."
+          }
+        },
+        "conciseness_format": {
+          "score": 0.8351,
+          "detail": {
+            "gen_words": 64,
+            "ref_words": 89,
+            "length_ratio": 0.719,
+            "length_score": 0.7191,
+            "has_subject": true,
+            "has_greeting": true,
+            "has_signoff": true,
+            "structure_score": 1.0,
+            "flesch_reading_ease": 67.3,
+            "readability_score": 0.8775
+          }
+        },
+        "composite": 0.8617
+      },
+      "error": null
+    },
+    {
+      "model": "openai/gpt-5.4-mini",
+      "scenario_id": "s05_urgent_escalation",
+      "intent": "Escalate a production outage to the IT on-call team",
+      "tone": "urgent",
+      "email": "Subject: Urgent: Production checkout API outage\n\nHi IT On-Call Team,\n\nThe production checkout API has been down since 2:14pm, and it is blocking customer purchases. Roughly 3,000 users are affected. We need an acknowledgement within 30 minutes.\n\nPlease confirm receipt and let us know who is taking this.\n\nThank you,\nAlex",
+      "scores": {
+        "fact_intent_coverage": {
+          "score": 1.0,
+          "detail": {
+            "fact_recall": 1.0,
+            "facts_included": 4,
+            "facts_total": 4,
+            "intent_accomplished": true,
+            "hallucinated_claims": 0
+          }
+        },
+        "tone_accuracy": {
+          "score": 1.0,
+          "detail": {
+            "rating": 5,
+            "rationale": "The email precisely matches an urgent tone through its clear subject line flagging, specific impact metrics (3,000 users, exact downtime timestamp), a firm 30-minute acknowledgement deadline, and direct call-to-action language throughout."
+          }
+        },
+        "conciseness_format": {
+          "score": 0.9395,
+          "detail": {
+            "gen_words": 54,
+            "ref_words": 59,
+            "length_ratio": 0.915,
+            "length_score": 0.9153,
+            "has_subject": true,
+            "has_greeting": true,
+            "has_signoff": true,
+            "structure_score": 1.0,
+            "flesch_reading_ease": 65.4,
+            "readability_score": 0.9094
+          }
+        },
+        "composite": 0.9798
+      },
+      "error": null
+    },
+    {
+      "model": "openai/gpt-5.4-mini",
+      "scenario_id": "s06_cold_outreach_partner",
+      "intent": "Cold outreach proposing a newsletter sponsorship partnership",
+      "tone": "confident and casual",
+      "email": "Subject: Sponsorship idea for your developer tool\n\nHi,\n\nWe run a newsletter with 20,000 subscribers, and your developer tool looks like a strong fit for our audience. We'd like to propose a sponsored placement and think it could be a good way to get in front of engaged readers. I can share our media kit on request if helpful.\n\nBest,\nAlex",
+      "scores": {
+        "fact_intent_coverage": {
+          "score": 1.0,
+          "detail": {
+            "fact_recall": 1.0,
+            "facts_included": 4,
+            "facts_total": 4,
+            "intent_accomplished": true,
+            "hallucinated_claims": 0
+          }
+        },
+        "tone_accuracy": {
+          "score": 0.5,
+          "detail": {
+            "rating": 3,
+            "rationale": "The email is moderately confident in presenting the value proposition but leans professional and slightly formal rather than casual, lacking the relaxed, conversational energy that a truly casual tone would convey."
+          }
+        },
+        "conciseness_format": {
+          "score": 0.9519,
+          "detail": {
+            "gen_words": 63,
+            "ref_words": 69,
+            "length_ratio": 0.913,
+            "length_score": 0.913,
+            "has_subject": true,
+            "has_greeting": true,
+            "has_signoff": true,
+            "structure_score": 1.0,
+            "flesch_reading_ease": 61.4,
+            "readability_score": 0.9771
+          }
+        },
+        "composite": 0.8173
+      },
+      "error": null
+    },
+    {
+      "model": "openai/gpt-5.4-mini",
+      "scenario_id": "s07_thank_mentor",
+      "intent": "Thank a mentor for their help",
+      "tone": "warm and sincere",
+      "email": "Subject: Thank you\n\nHi [Name],\n\nThank you again for helping me prepare for my product manager interview. Your guidance made a real difference, and I\u2019m excited to share that I got the offer at Acme.\n\nI\u2019m incredibly grateful for your support, and I\u2019d like to treat you to coffee next week if you\u2019re available.\n\nWarmly,\n[Your Name]",
+      "scores": {
+        "fact_intent_coverage": {
+          "score": 1.0,
+          "detail": {
+            "fact_recall": 1.0,
+            "facts_included": 3,
+            "facts_total": 3,
+            "intent_accomplished": true,
+            "hallucinated_claims": 0
+          }
+        },
+        "tone_accuracy": {
+          "score": 1.0,
+          "detail": {
+            "rating": 5,
+            "rationale": "The email is genuinely warm and sincere throughout, expressing heartfelt gratitude, sharing good news enthusiastically, and offering a personal gesture of appreciation with no awkward or mismatched tonal slips."
+          }
+        },
+        "conciseness_format": {
+          "score": 0.899,
+          "detail": {
+            "gen_words": 61,
+            "ref_words": 71,
+            "length_ratio": 0.859,
+            "length_score": 0.8592,
+            "has_subject": true,
+            "has_greeting": true,
+            "has_signoff": true,
+            "structure_score": 1.0,
+            "flesch_reading_ease": 69.2,
+            "readability_score": 0.847
+          }
+        },
+        "composite": 0.9663
+      },
+      "error": null
+    },
+    {
+      "model": "openai/gpt-5.4-mini",
+      "scenario_id": "s08_deadline_extension",
+      "intent": "Request a deadline extension from a client",
+      "tone": "professional and diplomatic",
+      "email": "Subject: Request for a one-week extension\n\nHi [Client Name],\n\nI\u2019m reaching out to note that the project scope has grown by two additional features, and as a result I\u2019m requesting a one-week extension to March 14. I want to reassure you that Milestone 1 will still be delivered on time.\n\nPlease let me know if you\u2019d like to discuss this further.\n\nBest,\n[Your Name]",
+      "scores": {
+        "fact_intent_coverage": {
+          "score": 1.0,
+          "detail": {
+            "fact_recall": 1.0,
+            "facts_included": 3,
+            "facts_total": 3,
+            "intent_accomplished": true,
+            "hallucinated_claims": 0
+          }
+        },
+        "tone_accuracy": {
+          "score": 0.75,
+          "detail": {
+            "rating": 4,
+            "rationale": "The email is clear, respectful, and appropriately professional, though phrases like 'I'm reaching out to note' are slightly informal and the message could benefit from a brief acknowledgment of any inconvenience caused to fully meet diplomatic standards."
+          }
+        },
+        "conciseness_format": {
+          "score": 0.9108,
+          "detail": {
+            "gen_words": 69,
+            "ref_words": 76,
+            "length_ratio": 0.908,
+            "length_score": 0.9079,
+            "has_subject": true,
+            "has_greeting": true,
+            "has_signoff": true,
+            "structure_score": 1.0,
+            "flesch_reading_ease": 72.9,
+            "readability_score": 0.7842
+          }
+        },
+        "composite": 0.8869
+      },
+      "error": null
+    },
+    {
+      "model": "openai/gpt-5.4-mini",
+      "scenario_id": "s09_price_increase",
+      "intent": "Announce a price increase to existing customers",
+      "tone": "formal and reassuring",
+      "email": "Subject: Upcoming pricing update\n\nDear Customer,\n\nWe are writing to let you know that our prices will rise by 8% effective January 1. This is our first price increase in three years, and we remain committed to providing strong value and reliable service.\n\nIf you are on an existing annual plan, your current rate will remain locked in until your renewal. In addition, we have added new features, including priority support and advanced analytics, to better support your needs.\n\nThank you for your continued trust and partnership.\n\nSincerely,\nAlex",
+      "scores": {
+        "fact_intent_coverage": {
+          "score": 1.0,
+          "detail": {
+            "fact_recall": 1.0,
+            "facts_included": 4,
+            "facts_total": 4,
+            "intent_accomplished": true,
+            "hallucinated_claims": 0
+          }
+        },
+        "tone_accuracy": {
+          "score": 0.75,
+          "detail": {
+            "rating": 4,
+            "rationale": "The email is clearly formal in structure and language, and it reassures customers with the rate-lock guarantee and added features, though the closing signature ('Alex' without a title or full name) and the slightly abrupt announcement of the price increase could be softened further to fully achieve a polished, reassuring tone."
+          }
+        },
+        "conciseness_format": {
+          "score": 0.9337,
+          "detail": {
+            "gen_words": 89,
+            "ref_words": 94,
+            "length_ratio": 0.947,
+            "length_score": 0.9468,
+            "has_subject": true,
+            "has_greeting": true,
+            "has_signoff": true,
+            "structure_score": 1.0,
+            "flesch_reading_ease": 48.1,
+            "readability_score": 0.8014
+          }
+        },
+        "composite": 0.8946
+      },
+      "error": null
+    },
+    {
+      "model": "openai/gpt-5.4-mini",
+      "scenario_id": "s10_webinar_invite",
+      "intent": "Invite a guest speaker to a webinar",
+      "tone": "enthusiastic and professional",
+      "email": "Subject: Invitation to Speak at Our AI in Fintech Webinar\n\nHi,\n\nI\u2019m reaching out to invite you to speak at our webinar on AI in fintech, scheduled for April 22, 2-3pm ET. We expect an audience of roughly 500 startup founders, and we\u2019d love to feature a 25-minute talk followed by Q&A.\n\nWe\u2019re also pleased to offer a $500 honorarium for your time.\n\nIf you\u2019re open to it, I\u2019d be thrilled to share more details.\n\nBest,\nAlex",
+      "scores": {
+        "fact_intent_coverage": {
+          "score": 1.0,
+          "detail": {
+            "fact_recall": 1.0,
+            "facts_included": 5,
+            "facts_total": 5,
+            "intent_accomplished": true,
+            "hallucinated_claims": 0
+          }
+        },
+        "tone_accuracy": {
+          "score": 0.75,
+          "detail": {
+            "rating": 4,
+            "rationale": "The email is professional and mostly enthusiastic with phrases like 'we'd love to feature' and 'I'd be thrilled,' but the overall tone is somewhat understated and brief, falling slightly short of the energetic enthusiasm the requested tone implies."
+          }
+        },
+        "conciseness_format": {
+          "score": 0.9355,
+          "detail": {
+            "gen_words": 85,
+            "ref_words": 93,
+            "length_ratio": 0.914,
+            "length_score": 0.914,
+            "has_subject": true,
+            "has_greeting": true,
+            "has_signoff": true,
+            "structure_score": 1.0,
+            "flesch_reading_ease": 66.4,
+            "readability_score": 0.8927
+          }
+        },
+        "composite": 0.8952
+      },
+      "error": null
+    }
+  ],
+  "averages": {
+    "openai/gpt-5.4": {
+      "fact_intent_coverage": 1.0,
+      "tone_accuracy": 0.775,
+      "conciseness_format": 0.8852,
+      "composite": 0.8868,
+      "n_scored": 10
+    },
+    "openai/gpt-5.4-mini": {
+      "fact_intent_coverage": 1.0,
+      "tone_accuracy": 0.8,
+      "conciseness_format": 0.8979,
+      "composite": 0.8993,
+      "n_scored": 10
+    }
+  }
+}
